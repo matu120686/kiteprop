@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Termwind\Components\Dd;
 
 class PropertyController extends Controller
 {
@@ -14,8 +15,18 @@ class PropertyController extends Controller
      */
     public function index()
     {
-        $properties = Property::all();
-        return view('properties.properties', compact('properties'));
+        $properties = Property::latest()->paginate(10);
+        return view('properties.index', compact('properties'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return view('properties.create');
     }
 
 
@@ -27,7 +38,25 @@ class PropertyController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'title' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $properties = $request->all();
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $name = time().'.'.$image->getClientOriginalExtension();
+            $destinationPath = public_path('/images');
+            $image->move($destinationPath, $name);
+            $properties['image'] = $name;
+        }
+
+        Property::create($properties);
+        return redirect()->route('properties.index');
+        
     }
 
     /**
@@ -38,7 +67,8 @@ class PropertyController extends Controller
      */
     public function show(Property $property)
     {
-        //
+        $property = Property::find($property->id);
+        return view('properties.show', compact('property'));
     }
 
     /**
@@ -49,7 +79,7 @@ class PropertyController extends Controller
      */
     public function edit(Property $property)
     {
-        //
+        return view('properties.edit', compact('property'));
     }
 
     /**
@@ -61,7 +91,24 @@ class PropertyController extends Controller
      */
     public function update(Request $request, Property $property)
     {
-        //
+        $request->validate([
+            'title' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
+        ]);
+        $properties = $request->all();
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $name = time().'.'.$image->getClientOriginalExtension();
+            $destinationPath = public_path('/images');
+            $image->move($destinationPath, $name);
+            $properties['image'] = $name;
+        } else {
+            unset($properties['image']);
+        }
+        Property::find($property->id)->update($properties);
+        return redirect()->route('properties.index');
     }
 
     /**
@@ -72,6 +119,7 @@ class PropertyController extends Controller
      */
     public function destroy(Property $property)
     {
-        //
+        Property::find($property->id)->delete();
+        return redirect()->route('properties.index');
     }
 }

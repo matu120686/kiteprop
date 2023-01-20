@@ -5,12 +5,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PropertyController;
 
 
-Route::resource('properties', PropertyController::class)
-    ->middleware(['auth', 'verified']);
+Route::get('/', [PropertyController::class, 'index'])->name('properties.index')
+    ->middleware(['auth',]);
 
-Route::get('/', function () {
-    return view('welcome');
-});
+
+Route::resource('properties', PropertyController::class)
+    ->middleware(['auth']);
 
 Route::get('/dashboard', function () {
     return view('dashboard');
